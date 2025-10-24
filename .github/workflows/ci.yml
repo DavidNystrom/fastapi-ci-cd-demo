@@ -24,6 +24,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Run Black (code formatting)
+        run: black .
+
       - name: Run Black (code formatting check)
         run: black --check .
 
@@ -32,6 +35,6 @@ jobs:
 
       - name: Run MyPy (type checking)
         run: mypy .
-        
+
       - name: Run PyTest (unit tests)
         run: pytest
