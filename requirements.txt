@@ -4,3 +4,4 @@ pytest
 black
 flake8
 mypy
+httpx
