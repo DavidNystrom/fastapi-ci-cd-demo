@@ -5,3 +5,6 @@ black
 flake8
 mypy
 httpx
+pandas
+seaborn
+scikit-learn
