@@ -28,7 +28,7 @@ jobs:
         run: black . --line-length 79
 
       - name: Run Black (code formatting check)
-        run: black --check .
+        run: black --check . --line-length 79
 
       - name: Run Flake8 (linting)
         run: flake8 .
