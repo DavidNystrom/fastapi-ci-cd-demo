@@ -25,7 +25,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Black (code formatting)
-        run: black .
+        run: black . --line-length 79
 
       - name: Run Black (code formatting check)
         run: black --check .
