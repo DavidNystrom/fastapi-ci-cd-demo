@@ -8,3 +8,5 @@ httpx
 pandas
 seaborn
 scikit-learn
+imblearn
+xgboost

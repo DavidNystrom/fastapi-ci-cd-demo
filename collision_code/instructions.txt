@@ -1,0 +1,16 @@
+
+To run grid search for multiple models (logistic regression, random forest, XGBoost)
+
+python grid_search_severity.py \
+  --data "/path/to/US_Accidents_Dec23_updated.csv" \
+  --max-rows 300000 \
+  --target Severity \
+  --out-dir runs_csv/
+
+Base command:
+
+python grid_search_severity.py \
+  --data data/US_Accidents_March23.csv \
+  --max-rows 300000 \
+  --target Severity \
+  --out-dir runs_csv/
