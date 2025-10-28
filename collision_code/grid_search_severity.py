@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Grid search popular multiclass models for US Accidents severity prediction
-(CSV version).
+Grid search popular multiclass models for US Accidents severity
+prediction (CSV version).
 
 Models:
 - Logistic Regression (multinomial, class_weight='balanced')
@@ -19,10 +19,8 @@ Usage:
 
 import argparse
 import os
-import sys
 import json
 import warnings
-warnings.filterwarnings("ignore")
 
 import numpy as np
 import pandas as pd
@@ -54,6 +52,8 @@ try:
 except ImportError:
     HAS_XGB = False
 
+warnings.filterwarnings("ignore")
+
 
 # -----------------------------
 # Utilities
@@ -63,7 +63,9 @@ def load_csv(path: str, max_rows: int | None = None) -> pd.DataFrame:
     print(f"Reading CSV: {path}")
     df = pd.read_csv(path, low_memory=False)
     if max_rows and len(df) > max_rows:
-        print(f"Sampling {max_rows} of {len(df):,} rows for grid search...")
+        print(
+            f"Sampling {max_rows} of {len(df):,} rows for grid search..."
+        )
         df = df.sample(n=max_rows, random_state=42)
     print(f"Loaded {len(df):,} rows × {len(df.columns)} columns.")
     return df
@@ -95,7 +97,7 @@ def basic_feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     cats = [
         "Weather_Condition", "Wind_Direction", "Sunrise_Sunset",
         "Civil_Twilight", "Nautical_Twilight", "Astronomical_Twilight",
-        "Timezone"
+        "Timezone",
     ]
     for c in cats:
         if c in df.columns:
@@ -104,7 +106,7 @@ def basic_feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     num_candidates = [
         "Start_Lat", "Start_Lng", "End_Lat", "End_Lng", "Distance(mi)",
         "Temperature(F)", "Wind_Chill(F)", "Humidity(%)", "Pressure(in)",
-        "Visibility(mi)", "Wind_Speed(mph)", "Precipitation(in)"
+        "Visibility(mi)", "Wind_Speed(mph)", "Precipitation(in)",
     ]
     for c in num_candidates:
         if c in df.columns:
@@ -135,7 +137,7 @@ def prepare_xy(df: pd.DataFrame, target: str, max_cat_card: int = 100):
         "st_hour", "st_dow", "st_month", "st_is_weekend", "st_is_night",
         "Start_Lat", "Start_Lng", "End_Lat", "End_Lng", "Distance(mi)",
         "Temperature(F)", "Wind_Chill(F)", "Humidity(%)", "Pressure(in)",
-        "Visibility(mi)", "Wind_Speed(mph)", "Precipitation(in)"
+        "Visibility(mi)", "Wind_Speed(mph)", "Precipitation(in)",
     ]
     for c in num_feats:
         if c in df.columns:
@@ -144,7 +146,7 @@ def prepare_xy(df: pd.DataFrame, target: str, max_cat_card: int = 100):
     cat_feats = [
         "state", "City", "county", "Weather_Condition", "Wind_Direction",
         "Sunrise_Sunset", "Civil_Twilight", "Nautical_Twilight",
-        "Astronomical_Twilight", "Timezone"
+        "Astronomical_Twilight", "Timezone",
     ]
     for c in cat_feats:
         if c in df.columns:
@@ -157,17 +159,17 @@ def prepare_xy(df: pd.DataFrame, target: str, max_cat_card: int = 100):
 def build_preprocessor(num_cols, cat_cols) -> ColumnTransformer:
     num_pipe = Pipeline([
         ("impute", SimpleImputer(strategy="median")),
-        ("scale", StandardScaler())
+        ("scale", StandardScaler()),
     ])
     cat_pipe = Pipeline([
         ("impute", SimpleImputer(strategy="most_frequent")),
         ("ohe", OneHotEncoder(
             handle_unknown="ignore", sparse_output=True
-        ))
+        )),
     ])
     pre = ColumnTransformer([
         ("num", num_pipe, num_cols),
-        ("cat", cat_pipe, cat_cols)
+        ("cat", cat_pipe, cat_cols),
     ])
     return pre
 
@@ -199,8 +201,9 @@ def main():
     df = basic_feature_engineering(df)
     X, y, num_cols, cat_cols = prepare_xy(df, args.target)
     print(
-        f"Final dataset: {X.shape}, Target distribution:\n"
-        f"{y.value_counts(normalize=True)}"
+        "Final dataset: {}, Target distribution:\n{}".format(
+            X.shape, y.value_counts(normalize=True)
+        )
     )
 
     X_train, X_test, y_train, y_test = train_test_split(
@@ -226,7 +229,7 @@ def main():
         ("clf", LogisticRegression(
             multi_class="multinomial", solver="saga",
             class_weight="balanced", max_iter=200, n_jobs=-1
-        ))
+        )),
     ])
     logreg_params = {"clf__C": [0.2, 0.5, 1.0, 2.0]}
     gs_log = GridSearchCV(
@@ -243,12 +246,12 @@ def main():
         ("clf", RandomForestClassifier(
             class_weight="balanced_subsample", n_jobs=-1,
             random_state=42
-        ))
+        )),
     ])
     rf_params = {
         "clf__n_estimators": [200, 400],
         "clf__max_depth": [12, 20, None],
-        "clf__min_samples_leaf": [1, 3, 5]
+        "clf__min_samples_leaf": [1, 3, 5],
     }
     gs_rf = GridSearchCV(
         rf, rf_params, cv=cv, scoring=scoring,
@@ -264,12 +267,12 @@ def main():
             ("pre", pre),
             ("clf", BalancedRandomForestClassifier(
                 random_state=42, n_jobs=-1
-            ))
+            )),
         ])
         brf_params = {
             "clf__n_estimators": [200, 400],
             "clf__max_depth": [12, 20, None],
-            "clf__min_samples_leaf": [1, 3, 5]
+            "clf__min_samples_leaf": [1, 3, 5],
         }
         gs_brf = GridSearchCV(
             brf, brf_params, cv=cv, scoring=scoring,
@@ -293,12 +296,12 @@ def main():
                 objective="multi:softmax", num_class=4,
                 eval_metric="mlogloss", tree_method="hist",
                 n_jobs=-1, random_state=42
-            ))
+            )),
         ])
         xgb_params = {
             "clf__n_estimators": [250, 500],
             "clf__max_depth": [6, 10],
-            "clf__learning_rate": [0.05, 0.1]
+            "clf__learning_rate": [0.05, 0.1],
         }
         gs_xgb = GridSearchCV(
             xgb, xgb_params, cv=cv, scoring=scoring,
