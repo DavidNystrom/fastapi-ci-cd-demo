@@ -1,12 +1,13 @@
 fastapi
 uvicorn[standard]
 pytest
-black
-flake8
 mypy
-httpx
+ruff
 pandas
+numpy
+matplotlib
 seaborn
 scikit-learn
-imblearn
-xgboost
+# OPTIONAL if you want MyPy to be fully happy:
+pandas-stubs
+types-seaborn

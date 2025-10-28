@@ -26,14 +26,19 @@ import numpy as np
 import pandas as pd
 
 from sklearn.model_selection import (
-    StratifiedKFold, GridSearchCV, train_test_split
+    StratifiedKFold,
+    GridSearchCV,
+    train_test_split,
 )
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import (
-    f1_score, balanced_accuracy_score, classification_report,
-    confusion_matrix, make_scorer
+    f1_score,
+    balanced_accuracy_score,
+    classification_report,
+    confusion_matrix,
+    make_scorer,
 )
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
@@ -48,6 +53,7 @@ except ImportError:
 # optional XGBoost
 try:
     from xgboost import XGBClassifier
+
     HAS_XGB = True
 except ImportError:
     HAS_XGB = False
@@ -63,9 +69,7 @@ def load_csv(path: str, max_rows: int | None = None) -> pd.DataFrame:
     print(f"Reading CSV: {path}")
     df = pd.read_csv(path, low_memory=False)
     if max_rows and len(df) > max_rows:
-        print(
-            f"Sampling {max_rows} of {len(df):,} rows for grid search..."
-        )
+        print(f"Sampling {max_rows} of {len(df):,} rows for grid search...")
         df = df.sample(n=max_rows, random_state=42)
     print(f"Loaded {len(df):,} rows × {len(df.columns)} columns.")
     return df
@@ -95,8 +99,12 @@ def basic_feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
         df["county"] = df["County"].astype(str)
 
     cats = [
-        "Weather_Condition", "Wind_Direction", "Sunrise_Sunset",
-        "Civil_Twilight", "Nautical_Twilight", "Astronomical_Twilight",
+        "Weather_Condition",
+        "Wind_Direction",
+        "Sunrise_Sunset",
+        "Civil_Twilight",
+        "Nautical_Twilight",
+        "Astronomical_Twilight",
         "Timezone",
     ]
     for c in cats:
@@ -104,9 +112,18 @@ def basic_feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
             df[c] = df[c].astype(str)
 
     num_candidates = [
-        "Start_Lat", "Start_Lng", "End_Lat", "End_Lng", "Distance(mi)",
-        "Temperature(F)", "Wind_Chill(F)", "Humidity(%)", "Pressure(in)",
-        "Visibility(mi)", "Wind_Speed(mph)", "Precipitation(in)",
+        "Start_Lat",
+        "Start_Lng",
+        "End_Lat",
+        "End_Lng",
+        "Distance(mi)",
+        "Temperature(F)",
+        "Wind_Chill(F)",
+        "Humidity(%)",
+        "Pressure(in)",
+        "Visibility(mi)",
+        "Wind_Speed(mph)",
+        "Precipitation(in)",
     ]
     for c in num_candidates:
         if c in df.columns:
@@ -134,19 +151,39 @@ def prepare_xy(df: pd.DataFrame, target: str, max_cat_card: int = 100):
     num_cols, cat_cols = [], []
 
     num_feats = [
-        "st_hour", "st_dow", "st_month", "st_is_weekend", "st_is_night",
-        "Start_Lat", "Start_Lng", "End_Lat", "End_Lng", "Distance(mi)",
-        "Temperature(F)", "Wind_Chill(F)", "Humidity(%)", "Pressure(in)",
-        "Visibility(mi)", "Wind_Speed(mph)", "Precipitation(in)",
+        "st_hour",
+        "st_dow",
+        "st_month",
+        "st_is_weekend",
+        "st_is_night",
+        "Start_Lat",
+        "Start_Lng",
+        "End_Lat",
+        "End_Lng",
+        "Distance(mi)",
+        "Temperature(F)",
+        "Wind_Chill(F)",
+        "Humidity(%)",
+        "Pressure(in)",
+        "Visibility(mi)",
+        "Wind_Speed(mph)",
+        "Precipitation(in)",
     ]
     for c in num_feats:
         if c in df.columns:
             num_cols.append(c)
 
     cat_feats = [
-        "state", "City", "county", "Weather_Condition", "Wind_Direction",
-        "Sunrise_Sunset", "Civil_Twilight", "Nautical_Twilight",
-        "Astronomical_Twilight", "Timezone",
+        "state",
+        "City",
+        "county",
+        "Weather_Condition",
+        "Wind_Direction",
+        "Sunrise_Sunset",
+        "Civil_Twilight",
+        "Nautical_Twilight",
+        "Astronomical_Twilight",
+        "Timezone",
     ]
     for c in cat_feats:
         if c in df.columns:
@@ -157,20 +194,27 @@ def prepare_xy(df: pd.DataFrame, target: str, max_cat_card: int = 100):
 
 
 def build_preprocessor(num_cols, cat_cols) -> ColumnTransformer:
-    num_pipe = Pipeline([
-        ("impute", SimpleImputer(strategy="median")),
-        ("scale", StandardScaler()),
-    ])
-    cat_pipe = Pipeline([
-        ("impute", SimpleImputer(strategy="most_frequent")),
-        ("ohe", OneHotEncoder(
-            handle_unknown="ignore", sparse_output=True
-        )),
-    ])
-    pre = ColumnTransformer([
-        ("num", num_pipe, num_cols),
-        ("cat", cat_pipe, cat_cols),
-    ])
+    num_pipe = Pipeline(
+        [
+            ("impute", SimpleImputer(strategy="median")),
+            ("scale", StandardScaler()),
+        ]
+    )
+    cat_pipe = Pipeline(
+        [
+            ("impute", SimpleImputer(strategy="most_frequent")),
+            (
+                "ohe",
+                OneHotEncoder(handle_unknown="ignore", sparse_output=True),
+            ),
+        ]
+    )
+    pre = ColumnTransformer(
+        [
+            ("num", num_pipe, num_cols),
+            ("cat", cat_pipe, cat_cols),
+        ]
+    )
     return pre
 
 
@@ -178,8 +222,7 @@ def compute_class_weights(y: pd.Series) -> dict[int, float]:
     vals, counts = np.unique(y, return_counts=True)
     total = len(y)
     return {
-        int(v): float(total / (len(vals) * c))
-        for v, c in zip(vals, counts)
+        int(v): float(total / (len(vals) * c)) for v, c in zip(vals, counts)
     }
 
 
@@ -213,9 +256,7 @@ def main():
     pre = build_preprocessor(num_cols, cat_cols)
     f1_macro = make_scorer(f1_score, average="macro")
     bal_acc = make_scorer(balanced_accuracy_score)
-    cv = StratifiedKFold(
-        n_splits=args.cv, shuffle=True, random_state=42
-    )
+    cv = StratifiedKFold(n_splits=args.cv, shuffle=True, random_state=42)
     scoring = {"f1_macro": f1_macro, "bal_acc": bal_acc}
     refit_metric = "f1_macro"
 
@@ -224,38 +265,62 @@ def main():
 
     # Logistic Regression
     print("\nTraining Logistic Regression (grid search)...")
-    logreg = Pipeline([
-        ("pre", pre),
-        ("clf", LogisticRegression(
-            multi_class="multinomial", solver="saga",
-            class_weight="balanced", max_iter=200, n_jobs=-1
-        )),
-    ])
+    logreg = Pipeline(
+        [
+            ("pre", pre),
+            (
+                "clf",
+                LogisticRegression(
+                    multi_class="multinomial",
+                    solver="saga",
+                    class_weight="balanced",
+                    max_iter=200,
+                    n_jobs=-1,
+                ),
+            ),
+        ]
+    )
     logreg_params = {"clf__C": [0.2, 0.5, 1.0, 2.0]}
     gs_log = GridSearchCV(
-        logreg, logreg_params, cv=cv, scoring=scoring,
-        refit=refit_metric, n_jobs=-1, verbose=1
+        logreg,
+        logreg_params,
+        cv=cv,
+        scoring=scoring,
+        refit=refit_metric,
+        n_jobs=-1,
+        verbose=1,
     )
     gs_log.fit(X_train, y_train)
     results["logreg"] = gs_log
 
     # Random Forest
     print("\nTraining Random Forest (grid search)...")
-    rf = Pipeline([
-        ("pre", pre),
-        ("clf", RandomForestClassifier(
-            class_weight="balanced_subsample", n_jobs=-1,
-            random_state=42
-        )),
-    ])
+    rf = Pipeline(
+        [
+            ("pre", pre),
+            (
+                "clf",
+                RandomForestClassifier(
+                    class_weight="balanced_subsample",
+                    n_jobs=-1,
+                    random_state=42,
+                ),
+            ),
+        ]
+    )
     rf_params = {
         "clf__n_estimators": [200, 400],
         "clf__max_depth": [12, 20, None],
         "clf__min_samples_leaf": [1, 3, 5],
     }
     gs_rf = GridSearchCV(
-        rf, rf_params, cv=cv, scoring=scoring,
-        refit=refit_metric, n_jobs=-1, verbose=1
+        rf,
+        rf_params,
+        cv=cv,
+        scoring=scoring,
+        refit=refit_metric,
+        n_jobs=-1,
+        verbose=1,
     )
     gs_rf.fit(X_train, y_train)
     results["random_forest"] = gs_rf
@@ -263,54 +328,69 @@ def main():
     # Balanced Random Forest
     if BalancedRandomForestClassifier is not None:
         print("\nTraining Balanced Random Forest (grid search)...")
-        brf = Pipeline([
-            ("pre", pre),
-            ("clf", BalancedRandomForestClassifier(
-                random_state=42, n_jobs=-1
-            )),
-        ])
+        brf = Pipeline(
+            [
+                ("pre", pre),
+                (
+                    "clf",
+                    BalancedRandomForestClassifier(random_state=42, n_jobs=-1),
+                ),
+            ]
+        )
         brf_params = {
             "clf__n_estimators": [200, 400],
             "clf__max_depth": [12, 20, None],
             "clf__min_samples_leaf": [1, 3, 5],
         }
         gs_brf = GridSearchCV(
-            brf, brf_params, cv=cv, scoring=scoring,
-            refit=refit_metric, n_jobs=-1, verbose=1
+            brf,
+            brf_params,
+            cv=cv,
+            scoring=scoring,
+            refit=refit_metric,
+            n_jobs=-1,
+            verbose=1,
         )
         gs_brf.fit(X_train, y_train)
         results["balanced_rf"] = gs_brf
     else:
-        print(
-            "\nSkipping Balanced Random Forest "
-            "(imblearn not installed)."
-        )
+        print("\nSkipping Balanced Random Forest " "(imblearn not installed).")
 
     # XGBoost
     if HAS_XGB:
         print("\nTraining XGBoost (grid search)...")
         sample_weights = y_train.map(cw).astype(float).values
-        xgb = Pipeline([
-            ("pre", pre),
-            ("clf", XGBClassifier(
-                objective="multi:softmax", num_class=4,
-                eval_metric="mlogloss", tree_method="hist",
-                n_jobs=-1, random_state=42
-            )),
-        ])
+        xgb = Pipeline(
+            [
+                ("pre", pre),
+                (
+                    "clf",
+                    XGBClassifier(
+                        objective="multi:softmax",
+                        num_class=4,
+                        eval_metric="mlogloss",
+                        tree_method="hist",
+                        n_jobs=-1,
+                        random_state=42,
+                    ),
+                ),
+            ]
+        )
         xgb_params = {
             "clf__n_estimators": [250, 500],
             "clf__max_depth": [6, 10],
             "clf__learning_rate": [0.05, 0.1],
         }
         gs_xgb = GridSearchCV(
-            xgb, xgb_params, cv=cv, scoring=scoring,
-            refit=refit_metric, n_jobs=-1, verbose=1
+            xgb,
+            xgb_params,
+            cv=cv,
+            scoring=scoring,
+            refit=refit_metric,
+            n_jobs=-1,
+            verbose=1,
         )
-        gs_xgb.fit(
-            X_train, y_train,
-            **{"clf__sample_weight": sample_weights}
-        )
+        gs_xgb.fit(X_train, y_train, **{"clf__sample_weight": sample_weights})
         results["xgboost"] = gs_xgb
     else:
         print("\nSkipping XGBoost (not installed).")
@@ -335,10 +415,7 @@ def main():
     # Save summary
     out_path = os.path.join(args.out_dir, "results_summary.json")
     with open(out_path, "w") as f:
-        json.dump(
-            {k: v.best_params_ for k, v in results.items()},
-            f, indent=2
-        )
+        json.dump({k: v.best_params_ for k, v in results.items()}, f, indent=2)
 
 
 if __name__ == "__main__":
