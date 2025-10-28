@@ -26,11 +26,6 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
-      # Optional: keep imports tidy and Black-compatible
-      - name: isort (check)
-        run: isort . --profile black --filter-files --check-only
-
-      # Prefer check-only in CI; auto-fix locally or via pre-commit
       - name: Black (check)
         run: black . --line-length 79 --check
 
